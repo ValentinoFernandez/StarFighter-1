@@ -53,6 +53,28 @@ public:
 	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
 		float FireRate;
 
+	/////////////////////////////////////
+
+
+	void BombaFire();
+
+	/* Fire a shot in the specified direction */
+	void BombaFireShot(FVector BombaFireDirection);
+
+	/* Handler for the fire timer expiry */
+	void ShotTimerExpired();
+
+	/** Offset from the ships location to spawn projectiles */
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		FVector GunOffset;
+
+	/* How fast the weapon will fire */
+	UPROPERTY(Category = Gameplay, EditAnywhere, BlueprintReadWrite)
+		float BombaFireRate;
+
+
+	////////////////////////////////////
+
 	//Inventario
 	UPROPERTY()
 		UInventoryComponent* ShipInventory;
@@ -83,5 +105,19 @@ private:
 
 	float FireForwardValue;
 	float FireRightValue;
+
+	//////////////////////
+
+	/* Flag to control firing  */
+	uint32 bCanBombaFire : 1;
+
+	/** Handle for efficient management of ShotTimerExpired timer */
+	FTimerHandle TimerHandle_ShotTimerExpired;
+
+	float BombaFireForwardValue;
+	float BombaFireRightValue;
+
+
+	//////////////////////
 
 };

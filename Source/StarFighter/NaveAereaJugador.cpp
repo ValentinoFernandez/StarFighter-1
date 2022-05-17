@@ -40,6 +40,17 @@ ANaveAereaJugador::ANaveAereaJugador()
 	FireForwardValue = 1.0f;
 	FireRightValue = 0.0f;
 
+	///////////////////////
+
+	GunOffset = FVector(90.f, 0.f, 0.f);
+	BombaFireRate = 0.1f;
+	bCanBombaFire = false;
+
+	BombaFireForwardValue = 1.0f;
+	BombaFireRightValue = 0.0f;
+
+	//////////////////////
+
 	//const FVector MoveDirection = FVector(FireForwardValue, FireRightValue, 0.f).GetClampedToMaxSize(1.0f);
 
 	//const FRotator FireRotation = MoveDirection.Rotation();
@@ -74,6 +85,12 @@ void ANaveAereaJugador::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ANaveAereaJugador::Fire);
 	PlayerInputComponent->BindAction(TEXT("DropItem"), EInputEvent::IE_Pressed, this, &ANaveAereaJugador::DropItem);
 
+	///////////////////////////////
+
+	PlayerInputComponent->BindAction(TEXT("BombaFire"), IE_Pressed, this, &ANaveAereaJugador::BombaFire);
+
+	///////////////////////////////
+	
 	//PlayerInputComponent->BindAction(FireBinding);
 	//PlayerInputComponent->BindAxis(FireForwardBinding);
 	//PlayerInputComponent->BindAxis(FireRightBinding);
@@ -95,6 +112,22 @@ void ANaveAereaJugador::Tick(float DeltaSeconds)
 			FireRightValue = RightValue;
 		}
 	}
+
+///////////////////////////////////////////
+
+	if (ForwardValue != 0.0f || RightValue != 0.0f) {
+
+		if (ForwardValue != BombaFireForwardValue) {
+			BombaFireForwardValue = ForwardValue;
+		}
+
+		if (RightValue != BombaFireRightValue) {
+			BombaFireRightValue = RightValue;
+		}
+	}
+
+//////////////////////////////////////////
+
 
 	//UE_LOG(LogTemp, Warning, TEXT("ForwardValue: %f RightValue: %f"), ForwardValue, RightValue);
 
@@ -172,9 +205,72 @@ void ANaveAereaJugador::FireShot(FVector FireDirection)
 	}
 }
 
+
+/// /////////////////////////////////////////////////////
+
+void ANaveAereaJugador::BombaFire()
+{
+	bCanBombaFire = true;
+	UE_LOG(LogTemp, Warning, TEXT("Se presiono la letra B"));
+	// Create fire direction vector
+
+	UE_LOG(LogTemp, Warning, TEXT("BombaFireForwardValue: %f BombaFireRightValue: %f"), BombaFireForwardValue, BombaFireRightValue);
+	const FVector BombaFireDirection = FVector(BombaFireForwardValue, BombaFireRightValue, 0.f).GetClampedToMaxSize(1.0f);
+	//const FVector FireDirection = GetActorLocation();
+	// Try and fire a shot
+	BombaFireShot(BombaFireDirection);
+}
+
+void ANaveAereaJugador::BombaFireShot(FVector BombaFireDirection)
+{
+	// If it's ok to fire again
+	if (bCanBombaFire == true)
+	{
+
+		// If we are pressing fire stick in a direction
+		//if (FireDirection.SizeSquared() > 0.0f)
+		//{
+		const FRotator BombaFireRotation = BombaFireDirection.Rotation();
+		// Spawn projectile at an offset from this pawn
+		const FVector SpawnLocation = GetActorLocation() + BombaFireRotation.RotateVector(GunOffset);
+
+		UWorld* const World = GetWorld();
+		if (World != nullptr)
+		{
+			// spawn the projectile
+			World->SpawnActor<AProyectil>(SpawnLocation, BombaFireRotation);
+			//UE_LOG(LogTemp, Warning, TEXT("SpawnLocation(X, Y) = %s, %s FireRotation(X, Y) =  s, s"), SpawnLocation.X, SpawnLocation.Y);
+			//UE_LOG(LogTemp, Warning, TEXT("World not nullptr"));
+		}
+
+
+
+		//bCanFire = false;
+		World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &ANaveAereaJugador::ShotTimerExpired, BombaFireRate);
+
+		// try and play the sound if specified
+
+	/*	if (FireSound != nullptr)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+		}*/
+
+		bCanBombaFire = false;
+		//}
+	}
+}
+
+////////////////////////////////////////////////////////////
+
 void ANaveAereaJugador::ShotTimerExpired()
 {
 	bCanFire = true;
+
+	/// /////////
+
+	bCanBombaFire = true;
+
+	/////////////
 }
 
 void ANaveAereaJugador::DropItem()
